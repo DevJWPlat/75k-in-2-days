@@ -56,7 +56,7 @@ function createLiveFaceMarker() {
   el.style.color = 'white'
   el.style.fontSize = '24px'
   el.style.fontWeight = '700'
-  el.textContent = '🙂'
+  el.innerHTML = `<img src="/src/assets/images/team-marker.png" style="width:100%;height:100%;border-radius:999px;object-fit:cover;" />`
   return el
 }
 
