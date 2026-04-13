@@ -16,22 +16,20 @@ const tabs = [
 </script>
 
 <template>
-  <nav class="fixed bottom-0 left-0 right-0 z-30 border-t border-[var(--app-border)] bg-white">
-    <div class="mx-auto grid max-w-md grid-cols-3 gap-2 px-3 py-3">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        @click="emit('change', tab.id)"
-        :class="[
-          'rounded-2xl px-3 py-3 text-sm font-semibold transition',
-          currentTab === tab.id
-            ? 'bg-[var(--app-purple)] text-white'
-            : 'bg-[var(--app-purple-soft)] text-[var(--app-purple)]'
-        ]"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
+  <nav class="glass-panel flex items-center gap-2 rounded-full p-2 shadow-lg">
+    <button
+      v-for="tab in tabs"
+      :key="tab.id"
+      type="button"
+      @click="emit('change', tab.id)"
+      :class="[
+        'rounded-full px-4 py-3 text-sm font-semibold transition min-w-[110px]',
+        currentTab === tab.id
+          ? 'bg-[var(--app-purple)] text-white'
+          : 'bg-white/50 text-[var(--app-purple)]'
+      ]"
+    >
+      {{ tab.label }}
+    </button>
   </nav>
 </template>

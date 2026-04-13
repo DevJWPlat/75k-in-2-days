@@ -4,15 +4,27 @@ defineProps({
     type: String,
     required: true,
   },
+  menuOpen: {
+    type: Boolean,
+    default: false,
+  },
 })
+
+defineEmits(['toggle-menu'])
 </script>
 
 <template>
-  <header class="sticky top-0 z-30 border-b border-[var(--app-border)] bg-white/90 backdrop-blur">
-    <div class="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-      <div class="min-w-0">
-        <p class="truncate text-base font-semibold">75k in 2 days</p>
-      </div>
+  <header class="glass-panel flex items-center justify-between rounded-2xl px-4 py-3 shadow-sm">
+    <p class="truncate text-base font-semibold">75k in 2 days</p>
+
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="flex h-11 w-11 items-center justify-center rounded-full bg-white/60 text-xl text-[var(--app-text)]"
+        @click="$emit('toggle-menu')"
+      >
+        ☰
+      </button>
 
       <a
         :href="donateUrl"

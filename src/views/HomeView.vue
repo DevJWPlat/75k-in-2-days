@@ -10,11 +10,15 @@ import { loadRouteData } from '@/utils/loadRouteData'
 import { clampPercent, getNearestPointInfo } from '@/utils/routeMath'
 
 const donateUrl = 'https://www.justgiving.com/page/75km-in-32hours/'
+
 const currentTab = ref('overview')
 const routeData = ref(null)
 const liveCoords = ref(null)
 const trackingStatus = ref('Waiting for live location...')
 const routeError = ref('')
+const showStats = ref(false)
+const menuOpen = ref(false)
+
 let pollTimer = null
 
 const activeTabData = computed(() => {
@@ -79,20 +83,37 @@ const statCards = computed(() => {
     {
       label: 'Progress',
       value: `${progress.percent.toFixed(1)}% complete`,
+      tone: 'default',
     },
     {
       label: 'Remaining',
       value: `${progress.remainingKm.toFixed(1)}km to go`,
+      tone: 'default',
     },
     {
       label: 'Route status',
       value: progress.routeStatus,
+      tone:
+        progress.routeStatus === 'Off route'
+          ? 'danger'
+          : progress.routeStatus === 'On route'
+            ? 'success'
+            : 'default',
     },
     {
       label: 'Distance from route',
       value: `${(progress.offRouteDistanceKm * 1000).toFixed(0)}m`,
+      tone: 'default',
     },
   ]
+})
+
+const statsTopClass = computed(() => {
+  if (menuOpen.value) {
+    return 'top-[360px] sm:top-[260px]'
+  }
+
+  return 'top-[210px] sm:top-[210px]'
 })
 
 function handleTabChange(tabId) {
@@ -149,51 +170,105 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="mx-auto flex min-h-screen max-w-md flex-col bg-[var(--app-bg)]">
-    <AppHeader :donate-url="donateUrl" />
-
+  <main class="relative h-screen w-full overflow-hidden bg-[var(--app-bg)]">
     <template v-if="activeTabData">
-      <ProgressBar
-        :title="activeTabData.label"
-        :percent="progressData.percent"
-        :remaining-km="progressData.remainingKm"
-        :completed-km="progressData.completedKm"
-        :total-km="progressData.totalKm"
+      <WalkMap
+        :tab-data="activeTabData"
+        :live-coords="liveCoords || activeTabData.start.coords"
       />
 
-      <section class="px-4 pt-4">
-        <div class="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm text-[var(--app-muted)] shadow-sm">
-          {{ routeError || trackingStatus }}
-        </div>
-      </section>
-
-      <section class="grid grid-cols-2 gap-3 px-4 py-4">
-        <StatCard
-          v-for="card in statCards"
-          :key="card.label"
-          :label="card.label"
-          :value="card.value"
-        />
-      </section>
-
-      <section class="flex-1 px-4 pb-28">
-        <div class="h-[calc(100vh-310px)] min-h-[420px] overflow-hidden rounded-3xl border border-[var(--app-border)] bg-white shadow-sm">
-          <WalkMap
-            :tab-data="activeTabData"
-            :live-coords="liveCoords || activeTabData.start.coords"
+      <div class="pointer-events-none absolute inset-0 z-20">
+        <div class="pointer-events-auto absolute left-3 right-3 top-3">
+          <AppHeader
+            :donate-url="donateUrl"
+            :menu-open="menuOpen"
+            @toggle-menu="menuOpen = !menuOpen"
           />
         </div>
-      </section>
 
-      <BottomNav
-        :current-tab="currentTab"
-        @change="handleTabChange"
-      />
+        <div class="pointer-events-auto absolute left-3 right-3 top-24 flex flex-col gap-3 md:right-[280px]">
+          <ProgressBar
+            :title="activeTabData.label"
+            :percent="progressData.percent"
+            :remaining-km="progressData.remainingKm"
+            :completed-km="progressData.completedKm"
+            :total-km="progressData.totalKm"
+          />
+
+          <div class="glass-panel rounded-2xl px-4 py-3 text-sm text-[var(--app-muted)] shadow-sm">
+            {{ routeError || trackingStatus }}
+          </div>
+        </div>
+
+        <transition name="fade">
+          <aside
+            v-if="menuOpen"
+            class="pointer-events-auto absolute right-3 top-24 w-[280px] max-w-[calc(100%-24px)] rounded-3xl border border-white/20 bg-[rgba(124,58,237,0.82)] p-4 text-white shadow-xl backdrop-blur-xl"
+          >
+            <p class="text-sm font-semibold uppercase tracking-[0.12em] text-white/80">
+              Display options
+            </p>
+
+            <div class="mt-4 rounded-2xl bg-white/12 p-3">
+              <label class="flex cursor-pointer items-center gap-3">
+                <input
+                  v-model="showStats"
+                  type="checkbox"
+                  class="peer sr-only"
+                />
+
+                <span
+                  class="flex h-6 w-6 items-center justify-center rounded-md border border-white/40 bg-white/10 transition peer-checked:border-white peer-checked:bg-white peer-checked:text-[var(--app-purple)]"
+                >
+                  <svg
+                    class="h-4 w-4 opacity-0 transition peer-checked:opacity-100"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.704 5.29a1 1 0 010 1.42l-7.2 7.2a1 1 0 01-1.415 0l-3.6-3.6a1 1 0 111.414-1.42l2.893 2.894 6.493-6.494a1 1 0 011.415 0z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </span>
+
+                <span class="text-base font-medium text-white">
+                  Show tracker stats
+                </span>
+              </label>
+            </div>
+          </aside>
+        </transition>
+
+        <section
+          v-if="showStats"
+          :class="[
+            'pointer-events-auto absolute right-3 z-20 flex w-[180px] flex-col gap-3 sm:w-[220px] md:w-[240px]',
+            statsTopClass,
+          ]"
+        >
+          <StatCard
+            v-for="card in statCards"
+            :key="card.label"
+            :label="card.label"
+            :value="card.value"
+            :tone="card.tone"
+          />
+        </section>
+
+        <div class="pointer-events-auto absolute bottom-4 left-1/2 z-20 -translate-x-1/2">
+          <BottomNav
+            :current-tab="currentTab"
+            @change="handleTabChange"
+          />
+        </div>
+      </div>
     </template>
 
     <template v-else>
-      <section class="px-4 pt-6">
-        <div class="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-6 text-sm text-[var(--app-muted)] shadow-sm">
+      <section class="flex h-full items-center justify-center px-4">
+        <div class="glass-panel rounded-2xl px-4 py-6 text-sm text-[var(--app-muted)] shadow-sm">
           Loading route...
         </div>
       </section>
