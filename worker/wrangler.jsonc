@@ -1,0 +1,12 @@
+{
+  "name": "walk-tracker-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-04-13",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "walk-tracker-db",
+      "database_id": "7a856179-3956-4b9b-a580-7c0f471f5ddf"
+    }
+  ]
+}
