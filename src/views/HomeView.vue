@@ -1,23 +1,18 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import WalkMap from '@/components/WalkMap.vue'
 import BottomNav from '@/components/BottomNav.vue'
 import StatCard from '@/components/StatCard.vue'
 import { routeData } from '@/data/routes'
-import { useTracking } from '@/composables/useTracking'
+import { API_BASE_URL } from '@/config'
 
 const donateUrl = 'https://www.justgiving.com/page/75km-in-32hours/'
 const currentTab = ref('overview')
-
-const {
-  liveCoords,
-  trackingActive,
-  trackingError,
-  lastUpdated,
-  startTracking,
-} = useTracking()
+const liveCoords = ref(routeData.overview.start.coords)
+const trackingStatus = ref('Waiting for live location...')
+let pollTimer = null
 
 const activeTabData = computed(() => routeData[currentTab.value])
 
@@ -36,24 +31,44 @@ const statCards = computed(() => {
   ]
 })
 
-const trackingStatusText = computed(() => {
-  if (trackingError.value) return trackingError.value
-  if (trackingActive.value && lastUpdated.value) {
-    return `Live location active, updated at ${lastUpdated.value.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    })}`
-  }
-
-  return 'Tracker not started yet'
-})
-
 function handleTabChange(tabId) {
   currentTab.value = tabId
 }
 
+async function fetchLatestLocation() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/location/latest`)
+    const data = await response.json()
+
+    if (data?.location) {
+      liveCoords.value = [
+        data.location.longitude,
+        data.location.latitude,
+      ]
+
+      const updatedAt = new Date(data.location.updated_at)
+      trackingStatus.value = `Live location updated at ${updatedAt.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`
+    } else {
+      trackingStatus.value = 'No live location yet'
+    }
+  } catch (error) {
+    trackingStatus.value = 'Failed to fetch live location'
+  }
+}
+
 onMounted(() => {
-  startTracking()
+  fetchLatestLocation()
+  pollTimer = window.setInterval(fetchLatestLocation, 10000)
+})
+
+onBeforeUnmount(() => {
+  if (pollTimer) {
+    window.clearInterval(pollTimer)
+    pollTimer = null
+  }
 })
 </script>
 
@@ -71,7 +86,7 @@ onMounted(() => {
 
     <section class="px-4 pt-4">
       <div class="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm text-[var(--app-muted)] shadow-sm">
-        {{ trackingStatusText }}
+        {{ trackingStatus }}
       </div>
     </section>
 

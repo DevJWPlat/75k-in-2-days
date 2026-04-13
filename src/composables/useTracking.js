@@ -1,4 +1,5 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { API_BASE_URL } from '@/config'
 
 const liveCoords = ref([-2.548, 53.496])
 const trackingActive = ref(false)
@@ -7,8 +8,30 @@ const lastUpdated = ref(null)
 
 let watchId = null
 
+async function postLocation(latitude, longitude, accuracy) {
+  const response = await fetch(`${API_BASE_URL}/api/location`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      latitude,
+      longitude,
+      accuracy,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to post location')
+  }
+
+  return response.json()
+}
+
 export function useTracking() {
-  const hasLocation = computed(() => Array.isArray(liveCoords.value) && liveCoords.value.length === 2)
+  const hasLocation = computed(
+    () => Array.isArray(liveCoords.value) && liveCoords.value.length === 2
+  )
 
   function startTracking() {
     if (!('geolocation' in navigator)) {
@@ -24,14 +47,22 @@ export function useTracking() {
     }
 
     watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        liveCoords.value = [
-          position.coords.longitude,
-          position.coords.latitude,
-        ]
-        trackingActive.value = true
-        lastUpdated.value = new Date()
-        trackingError.value = ''
+      async (position) => {
+        const latitude = position.coords.latitude
+        const longitude = position.coords.longitude
+        const accuracy = position.coords.accuracy
+
+        liveCoords.value = [longitude, latitude]
+
+        try {
+          await postLocation(latitude, longitude, accuracy)
+          trackingActive.value = true
+          lastUpdated.value = new Date()
+          trackingError.value = ''
+        } catch (error) {
+          trackingActive.value = false
+          trackingError.value = 'Location found, but failed to sync to server.'
+        }
       },
       (error) => {
         trackingActive.value = false

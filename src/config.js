@@ -1,0 +1,1 @@
+export const API_BASE_URL = 'https://walk-tracker-api.jonny-whittle.workers.dev'
