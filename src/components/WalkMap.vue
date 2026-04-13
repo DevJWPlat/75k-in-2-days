@@ -149,7 +149,7 @@ function updateLiveMarker() {
 onMounted(() => {
   map = new maplibregl.Map({
     container: mapContainer.value,
-    style: 'https://demotiles.maplibre.org/style.json',
+    style: 'https://tiles.stadiamaps.com/styles/alidade_smooth.json',
     center: props.tabData.start.coords,
     zoom: 11,
   })
