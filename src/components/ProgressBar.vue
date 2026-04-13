@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   title: {
     type: String,
@@ -22,7 +24,9 @@ const props = defineProps({
   },
 })
 
-const safePercent = Math.max(0, Math.min(100, props.percent))
+const safePercent = computed(() => {
+  return Math.max(0, Math.min(100, props.percent))
+})
 </script>
 
 <template>
