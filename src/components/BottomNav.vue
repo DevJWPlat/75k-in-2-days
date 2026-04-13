@@ -16,20 +16,20 @@ const tabs = [
 </script>
 
 <template>
-  <nav class="glass-panel flex items-center gap-2 rounded-full p-2 shadow-lg">
+  <div class="glass-panel flex items-center gap-1.5 rounded-full px-2 py-2 shadow-lg whitespace-nowrap">
     <button
       v-for="tab in tabs"
       :key="tab.id"
       type="button"
       @click="emit('change', tab.id)"
       :class="[
-        'rounded-full px-4 py-3 text-sm font-semibold transition min-w-[110px]',
+        'rounded-full px-4 py-2 text-sm font-medium leading-none transition whitespace-nowrap',
         currentTab === tab.id
-          ? 'bg-[var(--app-purple)] text-white'
-          : 'bg-white/50 text-[var(--app-purple)]'
+          ? 'bg-[var(--app-purple)] text-white shadow-md'
+          : 'bg-white/45 text-[var(--app-purple)] hover:bg-white/60'
       ]"
     >
       {{ tab.label }}
     </button>
-  </nav>
+  </div>
 </template>

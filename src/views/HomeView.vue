@@ -82,12 +82,12 @@ const statCards = computed(() => {
   return [
     {
       label: 'Progress',
-      value: `${progress.percent.toFixed(1)}% complete`,
+      value: `${progress.percent.toFixed(1)}%`,
       tone: 'default',
     },
     {
       label: 'Remaining',
-      value: `${progress.remainingKm.toFixed(1)}km to go`,
+      value: `${progress.remainingKm.toFixed(1)}km`,
       tone: 'default',
     },
     {
@@ -101,19 +101,11 @@ const statCards = computed(() => {
             : 'default',
     },
     {
-      label: 'Distance from route',
+      label: 'From route',
       value: `${(progress.offRouteDistanceKm * 1000).toFixed(0)}m`,
       tone: 'default',
     },
   ]
-})
-
-const statsTopClass = computed(() => {
-  if (menuOpen.value) {
-    return 'top-[360px] sm:top-[260px]'
-  }
-
-  return 'top-[210px] sm:top-[210px]'
 })
 
 function handleTabChange(tabId) {
@@ -178,7 +170,7 @@ onBeforeUnmount(() => {
       />
 
       <div class="pointer-events-none absolute inset-0 z-20">
-        <div class="pointer-events-auto absolute left-3 right-3 top-3">
+        <div class="pointer-events-auto absolute left-3 right-3 top-3 z-30">
           <AppHeader
             :donate-url="donateUrl"
             :menu-open="menuOpen"
@@ -186,7 +178,7 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <div class="pointer-events-auto absolute left-3 right-3 top-24 flex flex-col gap-3 md:right-[280px]">
+        <div class="pointer-events-auto absolute left-3 right-3 top-24 z-20 flex flex-col gap-3">
           <ProgressBar
             :title="activeTabData.label"
             :percent="progressData.percent"
@@ -194,16 +186,12 @@ onBeforeUnmount(() => {
             :completed-km="progressData.completedKm"
             :total-km="progressData.totalKm"
           />
-
-          <div class="glass-panel rounded-2xl px-4 py-3 text-sm text-[var(--app-muted)] shadow-sm">
-            {{ routeError || trackingStatus }}
-          </div>
         </div>
 
         <transition name="fade">
           <aside
             v-if="menuOpen"
-            class="pointer-events-auto absolute right-3 top-24 w-[280px] max-w-[calc(100%-24px)] rounded-3xl border border-white/20 bg-[rgba(124,58,237,0.82)] p-4 text-white shadow-xl backdrop-blur-xl"
+            class="pointer-events-auto absolute right-3 top-24 z-50 w-[280px] max-w-[calc(100%-24px)] rounded-3xl border border-white/20 bg-[rgba(124,58,237,0.82)] p-4 text-white shadow-xl backdrop-blur-xl"
           >
             <p class="text-sm font-semibold uppercase tracking-[0.12em] text-white/80">
               Display options
@@ -243,21 +231,28 @@ onBeforeUnmount(() => {
 
         <section
           v-if="showStats"
-          :class="[
-            'pointer-events-auto absolute right-3 z-20 flex w-[180px] flex-col gap-3 sm:w-[220px] md:w-[240px]',
-            statsTopClass,
-          ]"
+          class="pointer-events-auto absolute left-3 right-3 top-[198px] z-20"
         >
-          <StatCard
-            v-for="card in statCards"
-            :key="card.label"
-            :label="card.label"
-            :value="card.value"
-            :tone="card.tone"
-          />
+          <div class="grid grid-cols-4 gap-3">
+            <StatCard
+              v-for="card in statCards"
+              :key="card.label"
+              :label="card.label"
+              :value="card.value"
+              :tone="card.tone"
+            />
+          </div>
         </section>
 
-        <div class="pointer-events-auto absolute bottom-4 left-1/2 z-20 -translate-x-1/2">
+        <div
+          class="pointer-events-auto absolute bottom-[155px] left-1/2 z-20 -translate-x-1/2"
+        >
+          <div class="glass-panel rounded-xl px-3 py-2 text-center text-[11px] leading-none text-[var(--app-muted)] shadow-sm whitespace-nowrap">
+            {{ routeError || trackingStatus }}
+          </div>
+        </div>
+
+        <div class="pointer-events-auto absolute bottom-24 left-1/2 z-30 -translate-x-1/2">
           <BottomNav
             :current-tab="currentTab"
             @change="handleTabChange"
