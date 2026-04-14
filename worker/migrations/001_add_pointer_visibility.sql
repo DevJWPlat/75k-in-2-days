@@ -1,0 +1,2 @@
+ALTER TABLE latest_location
+ADD COLUMN is_visible INTEGER NOT NULL DEFAULT 1;

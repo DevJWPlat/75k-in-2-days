@@ -5,6 +5,7 @@ const liveCoords = ref([-2.548, 53.496])
 const trackingActive = ref(false)
 const trackingError = ref('')
 const lastUpdated = ref(null)
+const pointerVisible = ref(true)
 
 let watchId = null
 
@@ -26,6 +27,53 @@ async function postLocation(latitude, longitude, accuracy) {
   }
 
   return response.json()
+}
+
+async function fetchServerLocationState() {
+  const response = await fetch(`${API_BASE_URL}/api/location/latest`)
+  const data = await response.json()
+
+  if (data?.location) {
+    pointerVisible.value = Boolean(data.location.is_visible)
+
+    if (
+      typeof data.location.latitude === 'number' &&
+      typeof data.location.longitude === 'number'
+    ) {
+      liveCoords.value = [data.location.longitude, data.location.latitude]
+    }
+
+    if (data.location.updated_at) {
+      lastUpdated.value = new Date(data.location.updated_at)
+    }
+  }
+
+  return data
+}
+
+async function setPointerVisibility(visible) {
+  const response = await fetch(`${API_BASE_URL}/api/location/visibility`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      visible,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to update pointer visibility')
+  }
+
+  const data = await response.json()
+  pointerVisible.value = Boolean(data.isVisible)
+
+  if (data.updatedAt) {
+    lastUpdated.value = new Date(data.updatedAt)
+  }
+
+  return data
 }
 
 export function useTracking() {
@@ -114,7 +162,10 @@ export function useTracking() {
     trackingError,
     lastUpdated,
     hasLocation,
+    pointerVisible,
     startTracking,
     stopTracking,
+    fetchServerLocationState,
+    setPointerVisibility,
   }
 }

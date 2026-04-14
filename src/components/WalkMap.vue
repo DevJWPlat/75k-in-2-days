@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
+import teamMarkerImage from '@/assets/images/team-marker.png'
 
 const props = defineProps({
   tabData: {
@@ -10,6 +11,14 @@ const props = defineProps({
   liveCoords: {
     type: Array,
     default: () => [],
+  },
+  liveVisible: {
+    type: Boolean,
+    default: true,
+  },
+  mapStyle: {
+    type: String,
+    default: 'roads',
   },
 })
 
@@ -24,9 +33,16 @@ let liveMarker = null
 const sourceId = 'route-source'
 const lineId = 'route-line'
 
+function getStyleUrl() {
+  if (props.mapStyle === 'satellite') {
+    return 'https://tiles.stadiamaps.com/styles/alidade_satellite.json'
+  }
+
+  return 'https://tiles.stadiamaps.com/styles/alidade_smooth.json'
+}
+
 function createPin(label, type = 'default') {
   const el = document.createElement('div')
-  el.className = 'custom-marker'
   el.style.width = '18px'
   el.style.height = '18px'
   el.style.borderRadius = '999px'
@@ -43,21 +59,27 @@ function createPin(label, type = 'default') {
 }
 
 function createLiveFaceMarker() {
-  const el = document.createElement('div')
-  el.style.width = '52px'
-  el.style.height = '52px'
-  el.style.borderRadius = '999px'
-  el.style.background = '#7c3aed'
-  el.style.border = '3px solid white'
-  el.style.boxShadow = '0 10px 24px rgba(0,0,0,0.25)'
-  el.style.display = 'flex'
-  el.style.alignItems = 'center'
-  el.style.justifyContent = 'center'
-  el.style.color = 'white'
-  el.style.fontSize = '24px'
-  el.style.fontWeight = '700'
-  el.innerHTML = `<img src="/src/assets/images/team-marker.png" style="width:100%;height:100%;border-radius:999px;object-fit:cover;" />`
-  return el
+  const wrapper = document.createElement('div')
+  wrapper.style.width = '64px'
+  wrapper.style.height = '64px'
+  wrapper.style.display = 'flex'
+  wrapper.style.alignItems = 'center'
+  wrapper.style.justifyContent = 'center'
+
+  const img = document.createElement('img')
+  img.src = teamMarkerImage
+  img.alt = 'Team location'
+  img.style.width = '64px'
+  img.style.height = '64px'
+  img.style.objectFit = 'cover'
+  img.style.borderRadius = '999px'
+  img.style.border = '3px solid white'
+  img.style.boxShadow = '0 10px 24px rgba(0,0,0,0.25)'
+  img.style.background = 'white'
+  img.draggable = false
+
+  wrapper.appendChild(img)
+  return wrapper
 }
 
 function fitMapToPath(path) {
@@ -67,7 +89,7 @@ function fitMapToPath(path) {
   path.forEach((coord) => bounds.extend(coord))
 
   map.fitBounds(bounds, {
-    padding: { top: 60, right: 30, bottom: 100, left: 30 },
+    padding: { top: 180, right: 40, bottom: 180, left: 40 },
     duration: 800,
   })
 }
@@ -137,7 +159,10 @@ function updateLiveMarker() {
   if (!map || !props.liveCoords?.length) return
 
   if (!liveMarker) {
-    liveMarker = new maplibregl.Marker({ element: createLiveFaceMarker() })
+    liveMarker = new maplibregl.Marker({
+      element: createLiveFaceMarker(),
+      anchor: 'center',
+    })
       .setLngLat(props.liveCoords)
       .setPopup(new maplibregl.Popup({ offset: 18 }).setText('Team location'))
       .addTo(map)
@@ -146,10 +171,24 @@ function updateLiveMarker() {
   }
 }
 
-onMounted(() => {
+function destroyMap() {
+  if (map) {
+    map.remove()
+    map = null
+  }
+
+  startMarker = null
+  midpointMarker = null
+  endMarker = null
+  liveMarker = null
+}
+
+function initialiseMap() {
+  destroyMap()
+
   map = new maplibregl.Map({
     container: mapContainer.value,
-    style: 'https://tiles.stadiamaps.com/styles/alidade_smooth.json',
+    style: getStyleUrl(),
     center: props.tabData.start.coords,
     zoom: 11,
   })
@@ -160,6 +199,10 @@ onMounted(() => {
     updateRoute()
     updateLiveMarker()
   })
+}
+
+onMounted(() => {
+  initialiseMap()
 })
 
 watch(
@@ -167,6 +210,7 @@ watch(
   () => {
     if (!map || !map.isStyleLoaded()) return
     updateRoute()
+    updateLiveMarker()
   },
   { deep: true }
 )
@@ -180,11 +224,15 @@ watch(
   { deep: true }
 )
 
-onBeforeUnmount(() => {
-  if (map) {
-    map.remove()
-    map = null
+watch(
+  () => props.mapStyle,
+  () => {
+    initialiseMap()
   }
+)
+
+onBeforeUnmount(() => {
+  destroyMap()
 })
 </script>
 

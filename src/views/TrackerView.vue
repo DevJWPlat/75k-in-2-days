@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useTracking } from '@/composables/useTracking'
 
 const {
@@ -7,8 +7,11 @@ const {
   trackingActive,
   trackingError,
   lastUpdated,
+  pointerVisible,
   startTracking,
   stopTracking,
+  fetchServerLocationState,
+  setPointerVisibility,
 } = useTracking()
 
 const statusText = computed(() => {
@@ -30,6 +33,22 @@ const formattedUpdated = computed(() => {
     minute: '2-digit',
     second: '2-digit',
   })
+})
+
+async function hidePointer() {
+  await setPointerVisibility(false)
+}
+
+async function showPointer() {
+  await setPointerVisibility(true)
+}
+
+onMounted(async () => {
+  try {
+    await fetchServerLocationState()
+  } catch (error) {
+    console.error(error)
+  }
 })
 </script>
 
@@ -64,6 +83,13 @@ const formattedUpdated = computed(() => {
         </p>
       </div>
 
+      <div class="rounded-3xl border border-[var(--app-border)] bg-white p-5 shadow-sm">
+        <p class="text-sm font-semibold">Map pointer</p>
+        <p class="mt-2 text-sm text-[var(--app-muted)]">
+          {{ pointerVisible ? 'Visible on public map' : 'Hidden on public map' }}
+        </p>
+      </div>
+
       <button
         v-if="!trackingActive"
         type="button"
@@ -82,11 +108,29 @@ const formattedUpdated = computed(() => {
         Stop tracking
       </button>
 
+      <button
+        v-if="pointerVisible"
+        type="button"
+        class="block w-full rounded-2xl border border-[var(--app-border)] bg-white px-4 py-4 text-center text-sm font-semibold text-[var(--app-text)] shadow-sm"
+        @click="hidePointer"
+      >
+        Hide map pointer
+      </button>
+
+      <button
+        v-else
+        type="button"
+        class="block w-full rounded-2xl border border-[var(--app-border)] bg-white px-4 py-4 text-center text-sm font-semibold text-[var(--app-text)] shadow-sm"
+        @click="showPointer"
+      >
+        Show map pointer
+      </button>
+
       <a
         href="/"
         target="_blank"
         rel="noopener noreferrer"
-        class="block w-full rounded-2xl border border-[var(--app-border)] bg-white px-4 py-4 text-center text-sm font-semibold text-[var(--app-text)] shadow-sm"
+        class="block rounded-2xl border border-[var(--app-border)] bg-white px-4 py-4 text-center text-sm font-semibold text-[var(--app-text)] shadow-sm"
       >
         Open live map
       </a>

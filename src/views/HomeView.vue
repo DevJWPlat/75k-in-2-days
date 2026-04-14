@@ -16,14 +16,31 @@ const routeData = ref(null)
 const liveCoords = ref(null)
 const trackingStatus = ref('Waiting for live location...')
 const routeError = ref('')
-const showStats = ref(false)
+const pointerVisible = ref(true)
+
 const menuOpen = ref(false)
+const showOverview = ref(true)
+const showProgressCard = ref(false)
+const showRemainingCard = ref(false)
+const showRouteStatusCard = ref(false)
+const showOffRouteCard = ref(false)
+const useSatelliteMap = ref(false)
 
 let pollTimer = null
 
 const activeTabData = computed(() => {
   if (!routeData.value) return null
   return routeData.value[currentTab.value]
+})
+
+const safeLiveCoords = computed(() => {
+  if (!activeTabData.value) return null
+
+  if (!pointerVisible.value) {
+    return routeData.value?.overview?.start?.coords || activeTabData.value.start.coords
+  }
+
+  return liveCoords.value || activeTabData.value.start.coords
 })
 
 const progressData = computed(() => {
@@ -41,6 +58,17 @@ const progressData = computed(() => {
   }
 
   const totalKm = tab.totalKm || 0
+
+  if (!pointerVisible.value) {
+    return {
+      percent: 0,
+      completedKm: 0,
+      remainingKm: totalKm,
+      totalKm,
+      offRouteDistanceKm: 0,
+      routeStatus: 'Pointer hidden',
+    }
+  }
 
   if (!liveCoords.value || !tab.path?.length || !tab.cumulativeDistances?.length) {
     return {
@@ -76,40 +104,115 @@ const progressData = computed(() => {
   }
 })
 
-const statCards = computed(() => {
+const allStatCards = computed(() => {
   const progress = progressData.value
 
   return [
     {
+      key: 'progress',
       label: 'Progress',
       value: `${progress.percent.toFixed(1)}%`,
       tone: 'default',
+      visible: showProgressCard.value,
     },
     {
+      key: 'remaining',
       label: 'Remaining',
       value: `${progress.remainingKm.toFixed(1)}km`,
       tone: 'default',
+      visible: showRemainingCard.value,
     },
     {
+      key: 'routeStatus',
       label: 'Route status',
       value: progress.routeStatus,
       tone:
         progress.routeStatus === 'Off route'
           ? 'danger'
-          : progress.routeStatus === 'On route'
+          : progress.routeStatus === 'On route' || progress.percent >= 100
             ? 'success'
             : 'default',
+      visible: showRouteStatusCard.value,
     },
     {
+      key: 'offRoute',
       label: 'From route',
       value: `${(progress.offRouteDistanceKm * 1000).toFixed(0)}m`,
       tone: 'default',
+      visible: showOffRouteCard.value,
     },
   ]
 })
 
+const visibleStatCards = computed(() => {
+  return allStatCards.value.filter((card) => card.visible)
+})
+
+const statsGridStyle = computed(() => {
+  const count = Math.max(1, visibleStatCards.value.length)
+
+  return {
+    gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`,
+  }
+})
+
+const selectedMapStyle = computed(() => {
+  return useSatelliteMap.value ? 'satellite' : 'roads'
+})
+
+const menuOptions = computed(() => [
+  {
+    key: 'overview',
+    label: 'Show Overview',
+    value: showOverview.value,
+    toggle: () => {
+      showOverview.value = !showOverview.value
+    },
+  },
+  {
+    key: 'progress',
+    label: 'Show Progress',
+    value: showProgressCard.value,
+    toggle: () => {
+      showProgressCard.value = !showProgressCard.value
+    },
+  },
+  {
+    key: 'remaining',
+    label: 'Show Remaining KM',
+    value: showRemainingCard.value,
+    toggle: () => {
+      showRemainingCard.value = !showRemainingCard.value
+    },
+  },
+  {
+    key: 'status',
+    label: 'Show route status',
+    value: showRouteStatusCard.value,
+    toggle: () => {
+      showRouteStatusCard.value = !showRouteStatusCard.value
+    },
+  },
+  {
+    key: 'offroute',
+    label: 'Show how far off route they are',
+    value: showOffRouteCard.value,
+    toggle: () => {
+      showOffRouteCard.value = !showOffRouteCard.value
+    },
+  },
+])
+
 function handleTabChange(tabId) {
   currentTab.value = tabId
+}
+
+function toggleMenu() {
+  menuOpen.value = !menuOpen.value
+}
+
+function toggleMenuOption(option) {
+  option.toggle()
 }
 
 async function fetchLatestLocation() {
@@ -118,16 +221,28 @@ async function fetchLatestLocation() {
     const data = await response.json()
 
     if (data?.location) {
-      liveCoords.value = [
-        data.location.longitude,
-        data.location.latitude,
-      ]
+      pointerVisible.value = Boolean(data.location.is_visible)
+
+      if (
+        typeof data.location.longitude === 'number' &&
+        typeof data.location.latitude === 'number'
+      ) {
+        liveCoords.value = [
+          data.location.longitude,
+          data.location.latitude,
+        ]
+      }
 
       const updatedAt = new Date(data.location.updated_at)
-      trackingStatus.value = `Live location updated at ${updatedAt.toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      })}`
+
+      if (!pointerVisible.value) {
+        trackingStatus.value = 'Live pointer hidden'
+      } else {
+        trackingStatus.value = `Live location updated at ${updatedAt.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}`
+      }
     } else {
       trackingStatus.value = 'No live location yet'
     }
@@ -166,7 +281,9 @@ onBeforeUnmount(() => {
     <template v-if="activeTabData">
       <WalkMap
         :tab-data="activeTabData"
-        :live-coords="liveCoords || activeTabData.start.coords"
+        :live-coords="safeLiveCoords"
+        :live-visible="true"
+        :map-style="selectedMapStyle"
       />
 
       <div class="pointer-events-none absolute inset-0 z-20">
@@ -174,42 +291,47 @@ onBeforeUnmount(() => {
           <AppHeader
             :donate-url="donateUrl"
             :menu-open="menuOpen"
-            @toggle-menu="menuOpen = !menuOpen"
+            @toggle-menu="toggleMenu"
           />
         </div>
 
-        <div class="pointer-events-auto absolute left-3 right-3 top-24 z-20 flex flex-col gap-3">
+        <div class="absolute left-3 right-3 top-24 z-20 flex flex-col gap-3">
           <ProgressBar
+            v-if="showOverview"
             :title="activeTabData.label"
             :percent="progressData.percent"
             :remaining-km="progressData.remainingKm"
             :completed-km="progressData.completedKm"
             :total-km="progressData.totalKm"
+            :is-complete="currentTab === 'overview' && progressData.percent >= 100"
           />
         </div>
 
         <transition name="fade">
           <aside
             v-if="menuOpen"
-            class="pointer-events-auto absolute right-3 top-24 z-50 w-[280px] max-w-[calc(100%-24px)] rounded-3xl border border-white/20 bg-[rgba(124,58,237,0.82)] p-4 text-white shadow-xl backdrop-blur-xl"
+            class="pointer-events-auto absolute right-3 top-24 z-50 w-[320px] max-w-[calc(100%-24px)] rounded-3xl border border-white/20 bg-[rgba(124,58,237,0.92)] p-4 text-white shadow-xl backdrop-blur-xl"
+            @click.stop
           >
             <p class="text-sm font-semibold uppercase tracking-[0.12em] text-white/80">
               Display options
             </p>
 
-            <div class="mt-4 rounded-2xl bg-white/12 p-3">
-              <label class="flex cursor-pointer items-center gap-3">
-                <input
-                  v-model="showStats"
-                  type="checkbox"
-                  class="peer sr-only"
-                />
-
+            <div class="mt-4 space-y-3 rounded-2xl bg-white/12 p-3">
+              <button
+                v-for="option in menuOptions"
+                :key="option.key"
+                type="button"
+                class="flex w-full items-center gap-3 text-left"
+                @click="toggleMenuOption(option)"
+              >
                 <span
-                  class="flex h-6 w-6 items-center justify-center rounded-md border border-white/40 bg-white/10 transition peer-checked:border-white peer-checked:bg-white peer-checked:text-[var(--app-purple)]"
+                  class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition"
+                  :class="option.value ? 'border-white bg-white' : 'border-white/40 bg-white/10'"
                 >
                   <svg
-                    class="h-4 w-4 opacity-0 transition peer-checked:opacity-100"
+                    v-if="option.value"
+                    class="h-4 w-4 text-[var(--app-purple)]"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -221,22 +343,52 @@ onBeforeUnmount(() => {
                   </svg>
                 </span>
 
-                <span class="text-base font-medium text-white">
-                  Show tracker stats
+                <span class="text-sm font-medium text-white">
+                  {{ option.label }}
                 </span>
-              </label>
+              </button>
+
+              <div class="border-t border-white/20 pt-3">
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 text-left"
+                  @click="useSatelliteMap = !useSatelliteMap"
+                >
+                  <span
+                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition"
+                    :class="useSatelliteMap ? 'border-white bg-white' : 'border-white/40 bg-white/10'"
+                  >
+                    <svg
+                      v-if="useSatelliteMap"
+                      class="h-4 w-4 text-[var(--app-purple)]"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M16.704 5.29a1 1 0 010 1.42l-7.2 7.2a1 1 0 01-1.415 0l-3.6-3.6a1 1 0 111.414-1.42l2.893 2.894 6.493-6.494a1 1 0 011.415 0z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                  </span>
+
+                  <span class="text-sm font-medium text-white">
+                    Use satellite map
+                  </span>
+                </button>
+              </div>
             </div>
           </aside>
         </transition>
 
         <section
-          v-if="showStats"
-          class="pointer-events-auto absolute left-3 right-3 top-[198px] z-20"
+          v-if="visibleStatCards.length"
+          class="absolute left-3 right-3 top-[198px] z-20"
         >
-          <div class="grid grid-cols-4 gap-3">
+          <div class="grid gap-3" :style="statsGridStyle">
             <StatCard
-              v-for="card in statCards"
-              :key="card.label"
+              v-for="card in visibleStatCards"
+              :key="card.key"
               :label="card.label"
               :value="card.value"
               :tone="card.tone"
@@ -245,7 +397,7 @@ onBeforeUnmount(() => {
         </section>
 
         <div
-          class="pointer-events-auto absolute bottom-[155px] left-1/2 z-20 -translate-x-1/2"
+          class="absolute bottom-[155px] left-1/2 z-20 -translate-x-1/2"
         >
           <div class="glass-panel rounded-xl px-3 py-2 text-center text-[11px] leading-none text-[var(--app-muted)] shadow-sm whitespace-nowrap">
             {{ routeError || trackingStatus }}

@@ -2,15 +2,38 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  title: String,
-  percent: Number,
-  remainingKm: Number,
-  completedKm: Number,
-  totalKm: Number,
+  title: {
+    type: String,
+    required: true,
+  },
+  percent: {
+    type: Number,
+    required: true,
+  },
+  remainingKm: {
+    type: Number,
+    required: true,
+  },
+  completedKm: {
+    type: Number,
+    required: true,
+  },
+  totalKm: {
+    type: Number,
+    required: true,
+  },
+  isComplete: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const safePercent = computed(() => {
   return Math.max(0, Math.min(100, props.percent))
+})
+
+const barClass = computed(() => {
+  return props.isComplete ? 'bg-green-500' : 'bg-[var(--app-purple)]'
 })
 </script>
 
@@ -28,7 +51,8 @@ const safePercent = computed(() => {
 
     <div class="h-2 overflow-hidden rounded-full bg-black/10">
       <div
-        class="h-full rounded-full bg-[var(--app-purple)] transition-all duration-300"
+        class="h-full rounded-full transition-all duration-300"
+        :class="barClass"
         :style="{ width: `${safePercent}%` }"
       />
     </div>
