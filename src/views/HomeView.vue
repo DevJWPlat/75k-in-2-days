@@ -292,33 +292,51 @@ onBeforeUnmount(() => {
       />
 
       <div class="pointer-events-none absolute inset-0 z-20">
-        <div class="pointer-events-auto absolute left-3 right-3 top-3 z-30">
-          <AppHeader
-            :donate-url="donateUrl"
-            :menu-open="menuOpen"
-            @toggle-menu="toggleMenu"
-          />
-        </div>
+        <div class="pointer-events-none relative mx-auto h-full w-full max-w-[1440px]">
+          <div class="pointer-events-auto absolute left-3 right-3 top-3 z-30">
+            <AppHeader
+              :donate-url="donateUrl"
+              :menu-open="menuOpen"
+              @toggle-menu="toggleMenu"
+            />
+          </div>
 
-        <div class="absolute left-3 right-3 top-24 z-20 flex flex-col gap-3">
-          <ProgressBar
-            v-if="showOverview"
-            :title="activeTabData.label"
-            :percent="progressData.percent"
-            :remaining-km="progressData.remainingKm"
-            :completed-km="progressData.completedKm"
-            :total-km="progressData.totalKm"
-            :is-complete="currentTab === 'overview' && progressData.percent >= 100"
-          />
-        </div>
-
-        <transition name="fade">
-          <aside
-            id="site-nav"
-            v-if="menuOpen"
-            class="pointer-events-auto overflow-hidden absolute right-3 top-24 z-50 w-full max-w-[calc(100%-24px)] rounded-2xl border border-white/20 bg-[rgba(124,58,237,0.92)] p-4 text-white shadow-xl backdrop-blur-xl"
-            @click.stop
+          <div
+            class="absolute left-3 right-3 top-24 z-20 flex flex-col gap-3 min-[767px]:right-auto min-[767px]:w-full min-[767px]:max-w-[300px]"
           >
+            <ProgressBar
+              v-if="showOverview"
+              :title="activeTabData.label"
+              :percent="progressData.percent"
+              :remaining-km="progressData.remainingKm"
+              :completed-km="progressData.completedKm"
+              :total-km="progressData.totalKm"
+              :is-complete="currentTab === 'overview' && progressData.percent >= 100"
+            />
+
+            <section v-if="visibleStatCards.length" class="w-full shrink-0">
+              <div
+                class="grid gap-3 lg:!grid-cols-1"
+                :style="statsGridStyle"
+              >
+                <StatCard
+                  v-for="card in visibleStatCards"
+                  :key="card.key"
+                  :label="card.label"
+                  :value="card.value"
+                  :tone="card.tone"
+                />
+              </div>
+            </section>
+          </div>
+
+          <transition name="fade">
+            <aside
+              id="site-nav"
+              v-if="menuOpen"
+              class="pointer-events-auto overflow-hidden absolute right-3 top-24 z-50 w-full max-w-[calc(100%-24px)] rounded-2xl border border-white/20 bg-[rgba(124,58,237,0.92)] p-4 text-white shadow-xl backdrop-blur-xl lg:max-w-sm"
+              @click.stop
+            >
             <p class="text-sm font-semibold uppercase tracking-[0.12em] text-white/80">
               Display options
             </p>
@@ -414,52 +432,38 @@ onBeforeUnmount(() => {
                 </div>
               </div>
             </div>
-          </aside>
-        </transition>
+            </aside>
+          </transition>
 
-        <section
-          v-if="visibleStatCards.length"
-          class="absolute left-3 right-3 top-[198px] z-20"
-        >
-          <div class="grid gap-3" :style="statsGridStyle">
-            <StatCard
-              v-for="card in visibleStatCards"
-              :key="card.key"
-              :label="card.label"
-              :value="card.value"
-              :tone="card.tone"
+          <div
+            v-if="pointerVisible"
+            class="absolute bottom-[155px] left-1/2 z-20 -translate-x-1/2"
+          >
+            <div class="glass-panel rounded-xl px-3 py-2 text-center text-[11px] leading-none text-[var(--app-muted)] shadow-sm whitespace-nowrap">
+              {{ routeError || trackingStatus }}
+            </div>
+          </div>
+
+          <div class="pointer-events-auto absolute bottom-24 left-1/2 z-30 -translate-x-1/2">
+            <BottomNav
+              :current-tab="currentTab"
+              @change="handleTabChange"
             />
           </div>
-        </section>
 
-        <div
-          v-if="pointerVisible"
-          class="absolute bottom-[155px] left-1/2 z-20 -translate-x-1/2"
-        >
-          <div class="glass-panel rounded-xl px-3 py-2 text-center text-[11px] leading-none text-[var(--app-muted)] shadow-sm whitespace-nowrap">
-            {{ routeError || trackingStatus }}
-          </div>
+          <a
+            href="https://www.platform.team/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="pointer-events-auto absolute bottom-10 left-1/2 z-40 -translate-x-1/2"
+          >
+            <img
+              :src="poweredByUrl"
+              alt="Powered by"
+              class="mx-auto block h-auto max-h-9 w-auto max-w-[min(90vw,20rem)] object-contain sm:max-h-10"
+            />
+          </a>
         </div>
-
-        <div class="pointer-events-auto absolute bottom-24 left-1/2 z-30 -translate-x-1/2">
-          <BottomNav
-            :current-tab="currentTab"
-            @change="handleTabChange"
-          />
-        </div>
-
-        <a
-          href="https://www.platform.team/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="pointer-events-auto absolute bottom-10 left-1/2 z-40 -translate-x-1/2"
-        >
-          <img
-            :src="poweredByUrl"
-            alt="Powered by"
-            class="mx-auto block h-auto max-h-9 w-auto max-w-[min(90vw,20rem)] object-contain sm:max-h-10"
-          />
-        </a>
       </div>
 
     </template>

@@ -76,6 +76,7 @@ function createLiveFaceMarker() {
   img.style.border = '3px solid #7c3aed'
   img.style.boxShadow = '0 10px 24px rgba(0,0,0,0.25)'
   img.style.background = 'white'
+  img.style.zIndex = '9999'
   img.draggable = false
 
   wrapper.appendChild(img)
