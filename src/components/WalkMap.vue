@@ -38,7 +38,7 @@ function getStyleUrl() {
     return 'https://api.maptiler.com/maps/satellite/style.json?key=XeH5NRqmt1ipvi3RdgJF'
   }
 
-  return 'https://tiles.stadiamaps.com/styles/alidade_smooth.json'
+  return 'https://api.maptiler.com/maps/streets/style.json?key=XeH5NRqmt1ipvi3RdgJF'
 }
 
 function createPin(label, type = 'default') {
@@ -69,11 +69,11 @@ function createLiveFaceMarker() {
   const img = document.createElement('img')
   img.src = teamMarkerImage
   img.alt = 'Team location'
-  img.style.width = '64px'
-  img.style.height = '64px'
+  img.style.width = '50px'
+  img.style.height = '50px'
   img.style.objectFit = 'cover'
   img.style.borderRadius = '999px'
-  img.style.border = '3px solid white'
+  img.style.border = '3px solid #7c3aed'
   img.style.boxShadow = '0 10px 24px rgba(0,0,0,0.25)'
   img.style.background = 'white'
   img.draggable = false

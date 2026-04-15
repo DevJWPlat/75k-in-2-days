@@ -5,9 +5,14 @@ import ProgressBar from '@/components/ProgressBar.vue'
 import WalkMap from '@/components/WalkMap.vue'
 import BottomNav from '@/components/BottomNav.vue'
 import StatCard from '@/components/StatCard.vue'
+import poweredByUrl from '@/assets/images/powered-by.png'
+import platformLogoUrl from '@/assets/images/platform.png'
+import starbucksLogoUrl from '@/assets/images/starbucks .png'
+import queenswayLogoUrl from '@/assets/images/queensway.png'
 import { API_BASE_URL } from '@/config'
 import { loadRouteData } from '@/utils/loadRouteData'
 import { clampPercent, getNearestPointInfo } from '@/utils/routeMath'
+
 
 const donateUrl = 'https://www.justgiving.com/page/75km-in-32hours/'
 
@@ -66,7 +71,7 @@ const progressData = computed(() => {
       remainingKm: totalKm,
       totalKm,
       offRouteDistanceKm: 0,
-      routeStatus: 'Pointer hidden',
+      routeStatus: 'On track',
     }
   }
 
@@ -309,8 +314,9 @@ onBeforeUnmount(() => {
 
         <transition name="fade">
           <aside
+            id="site-nav"
             v-if="menuOpen"
-            class="pointer-events-auto absolute right-3 top-24 z-50 w-[320px] max-w-[calc(100%-24px)] rounded-3xl border border-white/20 bg-[rgba(124,58,237,0.92)] p-4 text-white shadow-xl backdrop-blur-xl"
+            class="pointer-events-auto overflow-hidden absolute right-3 top-24 z-50 w-full max-w-[calc(100%-24px)] rounded-2xl border border-white/20 bg-[rgba(124,58,237,0.92)] p-4 text-white shadow-xl backdrop-blur-xl"
             @click.stop
           >
             <p class="text-sm font-semibold uppercase tracking-[0.12em] text-white/80">
@@ -377,6 +383,36 @@ onBeforeUnmount(() => {
                   </span>
                 </button>
               </div>
+              <div class="divider h-6"></div>
+              <p class="text-sm font-semibold uppercase tracking-[0.12em] text-white/80 mt-6">
+                Supported by
+              </p>
+              <div class="border-t border-white/20 pt-3 mt-3">
+                <div class="sponsor-logos flex max-w-[280px] items-center gap-4">
+                  <a
+                    href="https://www.platform.team/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="shrink-0"
+                  >
+                    <img
+                      :src="platformLogoUrl"
+                      alt="Platform"
+                      class="h-5 w-auto"
+                    />
+                  </a>
+                  <img
+                    :src="starbucksLogoUrl"
+                    alt="Starbucks"
+                    class="starbucks-logo h-6 w-auto shrink-0"
+                  />
+                  <img
+                    :src="queenswayLogoUrl"
+                    alt="Queensway"
+                    class="h-5 w-auto shrink-0"
+                  />
+                </div>
+              </div>
             </div>
           </aside>
         </transition>
@@ -397,6 +433,7 @@ onBeforeUnmount(() => {
         </section>
 
         <div
+          v-if="pointerVisible"
           class="absolute bottom-[155px] left-1/2 z-20 -translate-x-1/2"
         >
           <div class="glass-panel rounded-xl px-3 py-2 text-center text-[11px] leading-none text-[var(--app-muted)] shadow-sm whitespace-nowrap">
@@ -410,7 +447,21 @@ onBeforeUnmount(() => {
             @change="handleTabChange"
           />
         </div>
+
+        <a
+          href="https://www.platform.team/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="pointer-events-auto absolute bottom-10 left-1/2 z-40 -translate-x-1/2"
+        >
+          <img
+            :src="poweredByUrl"
+            alt="Powered by"
+            class="mx-auto block h-auto max-h-9 w-auto max-w-[min(90vw,20rem)] object-contain sm:max-h-10"
+          />
+        </a>
       </div>
+
     </template>
 
     <template v-else>
@@ -422,3 +473,17 @@ onBeforeUnmount(() => {
     </template>
   </main>
 </template>
+
+<style scoped>
+@media (max-width: 449px) {
+  .sponsor-logos {
+    gap: 8px;
+  }
+  .sponsor-logos img {
+    height: 14px;
+  }
+  .sponsor-logos .starbucks-logo {
+    height: 18px;
+  }
+}
+</style>

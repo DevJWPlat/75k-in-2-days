@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useTracking } from '@/composables/useTracking'
+import { useRouter } from 'vue-router'
 
 const {
   liveCoords,
@@ -50,6 +51,15 @@ onMounted(async () => {
     console.error(error)
   }
 })
+
+
+
+const router = useRouter()
+
+function logout() {
+  localStorage.removeItem('tracker-auth')
+  router.push('/tracker-login')
+}
 </script>
 
 <template>
@@ -134,6 +144,13 @@ onMounted(async () => {
       >
         Open live map
       </a>
+      <button
+        type="button"
+        class="block w-full rounded-2xl border border-[var(--app-border)] bg-white px-4 py-4 text-center text-sm font-semibold text-[var(--app-text)] shadow-sm"
+        @click="logout"
+      >
+        Log out
+</button>
     </div>
   </main>
 </template>
