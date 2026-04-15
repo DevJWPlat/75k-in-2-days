@@ -16,17 +16,19 @@ const tabs = [
 </script>
 
 <template>
-  <div class="glass-panel flex items-center gap-1.5 rounded-full px-2 py-2 shadow-lg whitespace-nowrap">
+  <div class="glass-panel flex items-center rounded-full px-1.5 py-1.5 shadow-lg whitespace-nowrap">
     <button
       v-for="tab in tabs"
       :key="tab.id"
       type="button"
       @click="emit('change', tab.id)"
       :class="[
-        'rounded-full px-4 py-2 text-sm font-medium leading-none transition whitespace-nowrap',
+        'flex-1 text-center rounded-full px-4 py-2 text-sm font-medium leading-none transition whitespace-nowrap',
         currentTab === tab.id
           ? 'bg-[var(--app-purple)] text-white shadow-md'
-          : 'text-[var(--app-purple)] hover:bg-white/60'
+          : 'text-[var(--app-purple)] hover:bg-white/60',
+        tab.id === 'overview' && currentTab === 'dayTwo' ? '!pr-0' : '',
+        tab.id === 'dayTwo' && currentTab === 'overview' ? '!pl-0' : '',
       ]"
     >
       {{ tab.label }}
