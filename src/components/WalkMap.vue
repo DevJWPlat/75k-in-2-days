@@ -35,7 +35,7 @@ const lineId = 'route-line'
 
 function getStyleUrl() {
   if (props.mapStyle === 'satellite') {
-    return 'https://tiles.stadiamaps.com/styles/alidade_satellite.json'
+    return 'https://api.maptiler.com/maps/satellite/style.json?key=XeH5NRqmt1ipvi3RdgJF'
   }
 
   return 'https://tiles.stadiamaps.com/styles/alidade_smooth.json'
