@@ -6,6 +6,7 @@ import WalkMap from '@/components/WalkMap.vue'
 import BottomNav from '@/components/BottomNav.vue'
 import StatCard from '@/components/StatCard.vue'
 import poweredByUrl from '@/assets/images/powered-by.png'
+import poweredByWhiteUrl from '@/assets/images/powered-by-white.png'
 import platformLogoUrl from '@/assets/images/platform.png'
 import starbucksLogoUrl from '@/assets/images/starbucks .png'
 import queenswayLogoUrl from '@/assets/images/queensway.png'
@@ -59,6 +60,7 @@ const progressData = computed(() => {
       totalKm: 0,
       offRouteDistanceKm: 0,
       routeStatus: 'No route loaded',
+      isComplete: false,
     }
   }
 
@@ -72,6 +74,7 @@ const progressData = computed(() => {
       totalKm,
       offRouteDistanceKm: 0,
       routeStatus: 'On track',
+      isComplete: false,
     }
   }
 
@@ -83,6 +86,7 @@ const progressData = computed(() => {
       totalKm,
       offRouteDistanceKm: 0,
       routeStatus: 'Waiting for live location',
+      isComplete: false,
     }
   }
 
@@ -91,7 +95,21 @@ const progressData = computed(() => {
   const remainingKm = Math.max(0, totalKm - completedKm)
   const percent = totalKm > 0 ? clampPercent((completedKm / totalKm) * 100) : 0
 
-  let routeStatus = 'On route'
+  const isComplete = percent >= 100
+
+  if (isComplete) {
+    return {
+      percent: 100,
+      completedKm: totalKm,
+      remainingKm: 0,
+      totalKm,
+      offRouteDistanceKm: 0,
+      routeStatus: 'Complete',
+      isComplete: true,
+    }
+  }
+
+  let routeStatus = 'On track'
 
   if (nearest.distanceKm > 0.3) {
     routeStatus = 'Off route'
@@ -106,35 +124,38 @@ const progressData = computed(() => {
     totalKm,
     offRouteDistanceKm: nearest.distanceKm,
     routeStatus,
+    isComplete: false,
   }
 })
 
 const allStatCards = computed(() => {
   const progress = progressData.value
+  const completeTone = progress.isComplete ? 'success' : 'default'
 
   return [
     {
       key: 'progress',
       label: 'Progress',
       value: `${progress.percent.toFixed(1)}%`,
-      tone: 'default',
+      tone: completeTone,
       visible: showProgressCard.value,
     },
     {
       key: 'remaining',
       label: 'Remaining',
       value: `${progress.remainingKm.toFixed(1)}km`,
-      tone: 'default',
+      tone: completeTone,
       visible: showRemainingCard.value,
     },
     {
       key: 'routeStatus',
       label: 'Route status',
       value: progress.routeStatus,
-      tone:
-        progress.routeStatus === 'Off route'
+      tone: progress.isComplete
+        ? 'success'
+        : progress.routeStatus === 'Off route'
           ? 'danger'
-          : progress.routeStatus === 'On route' || progress.percent >= 100
+          : progress.routeStatus === 'On track'
             ? 'success'
             : 'default',
       visible: showRouteStatusCard.value,
@@ -143,7 +164,7 @@ const allStatCards = computed(() => {
       key: 'offRoute',
       label: 'From route',
       value: `${(progress.offRouteDistanceKm * 1000).toFixed(0)}m`,
-      tone: 'default',
+      tone: completeTone,
       visible: showOffRouteCard.value,
     },
   ]
@@ -267,6 +288,10 @@ async function initialiseRoute() {
   }
 }
 
+const poweredBySrc = computed(() => {
+  return useSatelliteMap.value ? poweredByWhiteUrl : poweredByUrl
+})
+
 onMounted(async () => {
   await initialiseRoute()
   await fetchLatestLocation()
@@ -304,28 +329,30 @@ onBeforeUnmount(() => {
           <div
             class="absolute left-3 right-3 top-24 z-20 flex flex-col gap-3 min-[767px]:right-auto min-[767px]:w-full min-[767px]:max-w-[300px]"
           >
-            <ProgressBar
-              v-if="showOverview"
-              :title="activeTabData.label"
-              :percent="progressData.percent"
-              :remaining-km="progressData.remainingKm"
-              :completed-km="progressData.completedKm"
-              :total-km="progressData.totalKm"
-              :is-complete="currentTab === 'overview' && progressData.percent >= 100"
-            />
+          <ProgressBar
+            v-if="showOverview"
+            :title="activeTabData.label"
+            :percent="progressData.percent"
+            :remaining-km="progressData.remainingKm"
+            :completed-km="progressData.completedKm"
+            :total-km="progressData.totalKm"
+            :is-complete="progressData.percent >= 100"
+            :is-satellite="useSatelliteMap"
+          />
 
             <section v-if="visibleStatCards.length" class="w-full shrink-0">
               <div
                 class="grid gap-3 lg:!grid-cols-1"
                 :style="statsGridStyle"
               >
-                <StatCard
-                  v-for="card in visibleStatCards"
-                  :key="card.key"
-                  :label="card.label"
-                  :value="card.value"
-                  :tone="card.tone"
-                />
+              <StatCard
+                v-for="card in visibleStatCards"
+                :key="card.key"
+                :label="card.label"
+                :value="card.value"
+                :tone="card.tone"
+                :is-satellite="useSatelliteMap"
+              />
               </div>
             </section>
           </div>
@@ -439,9 +466,16 @@ onBeforeUnmount(() => {
             v-if="pointerVisible"
             class="absolute bottom-[165px] left-1/2 z-20 -translate-x-1/2"
           >
-            <div class="glass-panel rounded-xl px-3 py-2 text-center text-[11px] leading-none text-[var(--app-muted)] shadow-sm whitespace-nowrap">
-              {{ routeError || trackingStatus }}
-            </div>
+          <div
+            :class="[
+              'glass-panel rounded-xl px-3 py-2 text-center text-[11px] leading-none shadow-sm whitespace-nowrap',
+              useSatelliteMap
+                ? 'text-white/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]'
+                : 'text-[var(--app-muted)]'
+            ]"
+          >
+            {{ routeError || trackingStatus }}
+          </div>
           </div>
 
           <div class="pointer-events-auto absolute bottom-28 left-1/2 z-30 -translate-x-1/2">
@@ -458,7 +492,7 @@ onBeforeUnmount(() => {
             class="pointer-events-auto absolute bottom-16 left-1/2 z-40 -translate-x-1/2"
           >
             <img
-              :src="poweredByUrl"
+              :src="poweredBySrc"
               alt="Powered by"
               class="mx-auto block h-auto max-h-7 w-auto max-w-[200px] object-contain sm:max-h-10"
             />

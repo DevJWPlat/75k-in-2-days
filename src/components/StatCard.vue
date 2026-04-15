@@ -14,6 +14,10 @@ const props = defineProps({
     type: String,
     default: 'default',
   },
+  isSatellite: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const toneClasses = computed(() => {
@@ -27,6 +31,18 @@ const toneClasses = computed(() => {
 
   return 'bg-white/45 border-white/30'
 })
+
+const labelClass = computed(() => {
+  return props.isSatellite
+    ? 'text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]'
+    : 'text-[var(--app-muted)]'
+})
+
+const valueClass = computed(() => {
+  return props.isSatellite
+    ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]'
+    : 'text-[var(--app-text)]'
+})
 </script>
 
 <template>
@@ -36,11 +52,11 @@ const toneClasses = computed(() => {
       toneClasses,
     ]"
   >
-    <p class="stat-label text-[9px] font-medium uppercase tracking-[0.08em] leading-tight text-[var(--app-muted)]">
+    <p :class="['stat-label text-[9px] font-medium uppercase tracking-[0.08em] leading-tight', labelClass]">
       {{ label }}
     </p>
 
-    <p class="stat-value mt-1 text-[13px] font-semibold leading-tight text-[var(--app-text)] break-words">
+    <p :class="['stat-value mt-1 text-[13px] font-semibold leading-tight break-words', valueClass]">
       {{ value }}
     </p>
   </div>
