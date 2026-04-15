@@ -35,10 +35,7 @@ button {
 }
 
 .glass-panel {
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  background: rgba(255, 255, 255, 0.52);
-  border: 1px solid rgba(255, 255, 255, 0.32);
+  @apply backdrop-blur-xl bg-white/50 border border-white/30;
 }
 
 .fade-enter-active,

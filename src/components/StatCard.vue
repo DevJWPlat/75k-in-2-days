@@ -36,12 +36,23 @@ const toneClasses = computed(() => {
       toneClasses,
     ]"
   >
-    <p class="text-[9px] font-medium uppercase tracking-[0.08em] leading-tight text-[var(--app-muted)]">
+    <p class="stat-label text-[9px] font-medium uppercase tracking-[0.08em] leading-tight text-[var(--app-muted)]">
       {{ label }}
     </p>
 
-    <p class="mt-1 text-[13px] font-semibold leading-tight text-[var(--app-text)] break-words">
+    <p class="stat-value mt-1 text-[13px] font-semibold leading-tight text-[var(--app-text)] break-words">
       {{ value }}
     </p>
   </div>
 </template>
+
+<style scoped>
+@media (max-width: 449px) {
+  .stat-label {
+    font-size: 7px;
+  }
+  .stat-value {
+    font-size: 10px;
+  }
+}
+</style>
