@@ -437,14 +437,14 @@ onBeforeUnmount(() => {
 
           <div
             v-if="pointerVisible"
-            class="absolute bottom-[155px] left-1/2 z-20 -translate-x-1/2"
+            class="absolute bottom-[165px] left-1/2 z-20 -translate-x-1/2"
           >
             <div class="glass-panel rounded-xl px-3 py-2 text-center text-[11px] leading-none text-[var(--app-muted)] shadow-sm whitespace-nowrap">
               {{ routeError || trackingStatus }}
             </div>
           </div>
 
-          <div class="pointer-events-auto absolute bottom-24 left-1/2 z-30 -translate-x-1/2">
+          <div class="pointer-events-auto absolute bottom-28 left-1/2 z-30 -translate-x-1/2">
             <BottomNav
               :current-tab="currentTab"
               @change="handleTabChange"
@@ -455,12 +455,12 @@ onBeforeUnmount(() => {
             href="https://www.platform.team/"
             target="_blank"
             rel="noopener noreferrer"
-            class="pointer-events-auto absolute bottom-10 left-1/2 z-40 -translate-x-1/2"
+            class="pointer-events-auto absolute bottom-16 left-1/2 z-40 -translate-x-1/2"
           >
             <img
               :src="poweredByUrl"
               alt="Powered by"
-              class="mx-auto block h-auto max-h-9 w-auto max-w-[min(90vw,20rem)] object-contain sm:max-h-10"
+              class="mx-auto block h-auto max-h-7 w-auto max-w-[200px] object-contain sm:max-h-10"
             />
           </a>
         </div>
